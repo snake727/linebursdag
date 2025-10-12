@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday Line 🎉</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #ffe6f2, #ffe8cc);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: "Segoe UI", sans-serif;
+      color: #333;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+      color: #e64b6b;
+      margin-bottom: 0.5em;
+    }
+
+    p {
+      font-size: 1.3rem;
+      color: #444;
+      text-align: center;
+      max-width: 500px;
+      line-height: 1.5;
+    }
+
+    button {
+      margin-top: 1.5em;
+      padding: 0.8em 1.4em;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 8px;
+      background: #ff6f91;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #ff5470;
+    }
+
+    .hidden-message {
+      margin-top: 1.5em;
+      font-size: 1.4rem;
+      color: #e64b6b;
+      display: none;
+    }
+
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 Happy Birthday, Line! 🎂</h1>
+  <p>
+    I made this little page just for you — because you deserve something special today.
+  </p>
+  <button id="revealBtn">Click me 💖</button>
+  <div class="hidden-message" id="message">You make the world a brighter place 🌸</div>
+
+  <canvas class="confetti"></canvas>
+
+  <script>
+    const btn = document.getElementById("revealBtn");
+    const msg = document.getElementById("message");
+
+    btn.addEventListener("click", () => {
+      msg.style.display = "block";
+      startConfetti();
+      btn.style.display = "none";
+    });
+
+    // simple confetti effect
+    const canvas = document.querySelector(".confetti");
+    const ctx = canvas.getContext("2d");
+    let pieces = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function startConfetti() {
+      for (let i = 0; i < 150; i++) {
+        pieces.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          size: Math.random() * 8 + 4,
+          color: `hsl(${Math.random() * 360}, 80%, 60%)`,
+          speed: Math.random() * 3 + 2,
+          rotation: Math.random() * 360
+        });
+      }
+      requestAnimationFrame(updateConfetti);
+    }
+
+    function updateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        p.y += p.speed;
+        p.rotation += p.speed;
+        if (p.y > canvas.height) p.y = -10;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      });
+      requestAnimationFrame(updateConfetti);
+    }
+  </script>
+</body>
+</html>
