@@ -26,11 +26,80 @@ body {
   max-width: 400px;
   padding: 1.5em;
   border-radius: 12px;
+  display: none;
 }
 
 .screen.active {
   opacity: 1;
   transform: translateY(0);
+  display: block;
+}
+
+.navigation {
+  margin-top: 2em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+}
+
+.continue-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.7em 1.4em;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.3s;
+  margin: 1em auto;
+  display: block;
+}
+
+.nav-btn {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.5em 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s;
+}
+
+.nav-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.continue-btn:hover {
+  background: var(--primary-dark);
+}
+
+.signature {
+  font-style: italic;
+  margin-top: 1.5em;
+  color: var(--primary);
+}
+
+.progress-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 4px;
+  background: rgba(91, 144, 113, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  width: 0%;
+  transition: width 0.8s ease;
+  border-radius: 2px;
 }
 
 input {

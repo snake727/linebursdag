@@ -1,5 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+  <div id="journey" class="screen">
+    <h2>Our little journey 💫</h2>
+    <p>Line, you've made my life so much brighter. Let me show you what you mean to me...</p>
+    <button class="continue-btn" onclick="showSection('first-moments')">Continue</button>
+  </div>
+
+  <div id="first-moments" class="screen">
+    <h2>First Moments ✨</h2>
+    <p>I still remember the first time I saw you - how your smile lit up the entire room.</p>
+    <p>That moment when I knew there was something special about you.</p>
+    <div class="navigation">
+      <button class="nav-btn" onclick="showSection('journey')">Back</button>
+      <button class="continue-btn" onclick="showSection('growing-together')">Continue</button>
+    </div>
+  </div>
+
+  <div id="growing-together" class="screen">
+    <h2>Growing Together 🌿</h2>
+    <p>Every day with you has been an adventure. From our inside jokes to the way you make even ordinary moments feel magical.</p>
+    <p>Watching us grow together has been the most beautiful journey.</p>
+    <div class="navigation">
+      <button class="nav-btn" onclick="showSection('first-moments')">Back</button>
+      <button class="continue-btn" onclick="showSection('what-i-love')">Continue</button>
+    </div>
+  </div>
+
+  <div id="what-i-love" class="screen">
+    <h2>What I Love About You 💚</h2>
+    <p>Your kindness, your laugh, the way you care about everyone around you.</p>
+    <p>How you make me want to be a better person just by being yourself.</p>
+    <p>You are absolutely incredible, Line.</p>
+    <div class="navigation">
+      <button class="nav-btn" onclick="showSection('growing-together')">Back</button>
+      <button class="continue-btn" onclick="showSection('our-future')">Continue</button>
+    </div>
+  </div>
+
+  <div id="our-future" class="screen">
+    <h2>Our Future 🌟</h2>
+    <p>I can't wait to see where this journey takes us next.</p>
+    <p>All the adventures we'll have, the memories we'll make, the dreams we'll chase together.</p>
+    <div class="navigation">
+      <button class="nav-btn" onclick="showSection('what-i-love')">Back</button>
+      <button class="continue-btn" onclick="showSection('birthday-message')">Continue</button>
+    </div>
+  </div>
+
+  <div id="birthday-message" class="screen">
+    <h2>Happy Birthday, Beautiful 🎂</h2>
+    <p>Today is all about celebrating you and the amazing person you are.</p>
+    <p>Thank you for being you, for being mine, for making every day brighter.</p>
+    <p>I love you more than words can say.</p>
+    <p class="signature">— Markus 💚</p>
+    <div class="navigation">
+      <button class="nav-btn" onclick="showSection('our-future')">Back</button>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <script src="script.js"></script>ang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
