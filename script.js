@@ -8,7 +8,7 @@ async function hashMessage(message) {
 
 // Set this to the SHA-256 hash of your real password.
 // You can generate it later by calling hashMessage("yourpassword") in console.
-const PASSWORD_HASH = "replace_this_with_real_hash";
+const PASSWORD_HASH = "38c69d88e8c0798840b4c4e3a69bec0e03b37329c97fdb9cf190bcffed22d4bf";
 
 const btn = document.getElementById("enterBtn");
 const input = document.getElementById("password");
