@@ -10,14 +10,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8.x/dist/pixi.min.js"></script>
   <script>
     gsap.registerPlugin(MotionPathPlugin);
   </script>
 </head>
 <body>
-  <!-- Overlay for transitions (used by GSAP effects) -->
-  <div id="transitionOverlay" class="transition-overlay"></div>
-
   <!-- Particle systems for different effects -->
   <div id="particles-leaves" class="particle-system"></div>
   <div id="particles-birds" class="particle-system"></div>
@@ -37,8 +35,9 @@
     Your browser does not support the audio element.
   </audio>
 
-  <!-- Transition overlay for animations -->
-  <div class="transition-overlay" id="transitionOverlay">
+  <!-- Combined canvas and transition overlay -->
+  <div id="transitionOverlay" class="transition-overlay">
+    <div id="particles-container"></div>
     <canvas id="animationCanvas"></canvas>
   </div>
 
@@ -111,7 +110,6 @@
   <div class="progress-bar">
     <div class="progress-fill" id="progress-fill"></div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
