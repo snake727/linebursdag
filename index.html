@@ -5,8 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>For Line 💚</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- External libraries for professional animations -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js"></script>
+  <script>
+    gsap.registerPlugin(MotionPathPlugin);
+  </script>
 </head>
 <body>
+  <!-- Overlay for transitions (used by GSAP effects) -->
+  <div id="transitionOverlay" class="transition-overlay"></div>
+
+  <!-- Particle systems for different effects -->
+  <div id="particles-leaves" class="particle-system"></div>
+  <div id="particles-birds" class="particle-system"></div>
+  <div id="particles-water" class="particle-system"></div>
+  <div id="particles-sparkles" class="particle-system"></div>
+
+  <!-- Audio controls -->
+  <div class="audio-controls">
+    <button class="audio-toggle" id="audioToggle" onclick="toggleAudio()">🎵</button>
+  </div>
+
+  <!-- Background audio -->
+  <audio id="backgroundAudio" loop preload="auto">
+    <source src="background-music.mp3" type="audio/mpeg">
+    <source src="background-music.ogg" type="audio/ogg">
+    <!-- Fallback for browsers that don't support audio element -->
+    Your browser does not support the audio element.
+  </audio>
+
+  <!-- Transition overlay for animations -->
+  <div class="transition-overlay" id="transitionOverlay">
+    <canvas id="animationCanvas"></canvas>
+  </div>
+
   <div id="welcome" class="screen active">
     <h1>Hi Line 🌿</h1>
     <p>I made something small for you. Enter the password I'll give you in person.</p>
