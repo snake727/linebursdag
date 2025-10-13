@@ -320,18 +320,26 @@ const transitionAnimations = {
         const spacingX = 0.5; // Reduced spacing for much denser coverage
         const spacingY = 0.4; // Reduced vertical spacing for denser packing
         
-        // Starting positions: Spread across entire screen area but shifted top-left
-        const screenStartX = -10 + (birdCol * spacingX) + (Math.sin(seed * 4.2) * 6); // Tighter spread
-        const screenStartY = 15 - (birdRow * spacingY) + (Math.cos(seed * 3.8) * 3); // Tighter spread
+        // Responsive screen dimensions
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
         
-        // Add diagonal offset to create top-left to bottom-right movement
-        const diagonalOffset = (birdRow + birdCol) * 0.3; // Creates diagonal wave effect
-        const startX = screenStartX - diagonalOffset; // Top-left bias
-        const startY = screenStartY + diagonalOffset; // Top-left bias
+        // Grid-based starting positions with screen responsiveness
+        const gridX = (birdCol / (birdsPerRow - 1)) + (Math.sin(seed * 4.2) * 0.2 - 0.1); // Normalized 0-1 with variation
+        const gridY = (birdRow / (birdsPerRow - 1)) + (Math.cos(seed * 3.8) * 0.15 - 0.075); // Normalized 0-1 with variation
         
-        // Ending positions: Diagonal movement to bottom-right while covering screen
-        const endX = screenStartX + diagonalOffset + 25; // Bottom-right movement
-        const endY = screenStartY - diagonalOffset - 20; // Bottom-right movement
+        // Convert to Three.js coordinates starting from top-left area
+        const startScreenX = gridX * (screenWidth - margin * 2) + margin - screenWidth * 0.3; // Start left of screen
+        const startScreenY = (1 - gridY) * (screenHeight - margin * 2) + margin + screenHeight * 0.2; // Start above screen
+        const startX = (startScreenX - screenWidth / 2) / 100; // Convert to Three.js coordinates
+        const startY = (startScreenY - screenHeight / 2) / 100;
+        
+        // Ending positions: Diagonal movement to bottom-right
+        const endScreenX = startScreenX + screenWidth * 0.8; // Move across and off screen
+        const endScreenY = startScreenY - screenHeight * 0.8; // Move down and off screen
+        const endX = (endScreenX - screenWidth / 2) / 100;
+        const endY = (endScreenY - screenHeight / 2) / 100;
         
         // Individual timing for natural effect with speed variations
         const flightProgress = reverse ? (1 - progress) : progress;
@@ -374,32 +382,105 @@ const transitionAnimations = {
     animate: (particles, progress, reverse = false) => {
       const direction = reverse ? -1 : 1;
       particles.forEach((particle, i) => {
-        // Petals fall slowly, caught in gentle wind
-        const windStrength = 1.5;
-        const fallSpeed = 8;
+        // Create 8 unique falling patterns for variety
+        const patternType = i % 8;
+        const seed = i * 0.12345;
         
-        // Starting positions across the top
-        const startX = (i % 20 - 10) * 0.8;
-        const startY = 8;
-        
-        const timeOffset = (i % 10) * 0.1; // Stagger the falling
+        // Much slower, gentle falling for longer visibility
+        const baseFallSpeed = 2.5 + (Math.sin(seed * 5.2) * 1.5); // Adjusted: 1-4 fall speed
+        const timeOffset = (i % 50) * 0.008; // Reduced stagger: max 0.4 seconds delay
         const adjustedProgress = Math.max(0, progress - timeOffset);
         
-        // Wind creates horizontal drift - multiple wind layers
-        const wind1 = Math.sin(adjustedProgress * Math.PI * 3 + i * 0.3) * windStrength;
-        const wind2 = Math.cos(adjustedProgress * Math.PI * 2 + i * 0.7) * windStrength * 0.5;
+        // Responsive starting positions spread across entire screen width
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
         
-        particle.position.x = startX + wind1 + wind2;
-        particle.position.y = (startY - adjustedProgress * fallSpeed) * direction;
+        // Distribute flowers across the full width of the screen
+        const normalizedX = (i % 40) / 39; // 0 to 1 across width
+        const screenStartX = normalizedX * (screenWidth - margin * 2) + margin;
+        const startX = (screenStartX - screenWidth / 2) / 100; // Convert to Three.js coordinates
+        const startY = (screenHeight * 0.6) / 100; // Start above screen, responsive to height
         
-        // Slight depth movement
-        particle.position.z = Math.sin(adjustedProgress * Math.PI * 4 + i) * 0.4;
+        let finalX, finalY, rotation, windX, windY;
         
-        // Gentle tumbling rotation
-        particle.rotation.z = adjustedProgress * Math.PI * 3 + i * 0.5;
+        // Pattern 0: Gentle S-curve fall
+        if (patternType === 0) {
+          windX = Math.sin(adjustedProgress * Math.PI * 2 + seed * 6) * 2.5;
+          windY = Math.cos(adjustedProgress * Math.PI * 1.5 + seed * 4) * 0.8;
+          rotation = adjustedProgress * Math.PI * 2 + seed * 3;
+        }
+        // Pattern 1: Spiral descent
+        else if (patternType === 1) {
+          const spiralRadius = 1.5 + Math.sin(seed * 7) * 0.8;
+          windX = Math.sin(adjustedProgress * Math.PI * 4 + seed * 8) * spiralRadius;
+          windY = Math.cos(adjustedProgress * Math.PI * 4 + seed * 8) * 0.5;
+          rotation = adjustedProgress * Math.PI * 4 + seed * 5;
+        }
+        // Pattern 2: Zigzag fall
+        else if (patternType === 2) {
+          windX = Math.sin(adjustedProgress * Math.PI * 6 + seed * 9) * 1.8;
+          windY = Math.sin(adjustedProgress * Math.PI * 3 + seed * 2) * 0.6;
+          rotation = adjustedProgress * Math.PI * 1.5 + seed * 7;
+        }
+        // Pattern 3: Lazy drift
+        else if (patternType === 3) {
+          windX = Math.sin(adjustedProgress * Math.PI * 1.5 + seed * 4) * 3.0;
+          windY = Math.cos(adjustedProgress * Math.PI * 0.8 + seed * 6) * 0.4;
+          rotation = adjustedProgress * Math.PI * 1.2 + seed * 2;
+        }
+        // Pattern 4: Flutter fall
+        else if (patternType === 4) {
+          windX = Math.sin(adjustedProgress * Math.PI * 8 + seed * 12) * 1.2;
+          windY = Math.sin(adjustedProgress * Math.PI * 10 + seed * 8) * 0.7;
+          rotation = adjustedProgress * Math.PI * 6 + seed * 9;
+        }
+        // Pattern 5: Wide pendulum
+        else if (patternType === 5) {
+          windX = Math.sin(adjustedProgress * Math.PI * 1.2 + seed * 5) * 4.0;
+          windY = Math.cos(adjustedProgress * Math.PI * 2.5 + seed * 3) * 0.5;
+          rotation = adjustedProgress * Math.PI * 0.8 + seed * 4;
+        }
+        // Pattern 6: Gentle curve with rotation bursts
+        else if (patternType === 6) {
+          windX = Math.sin(adjustedProgress * Math.PI * 2.5 + seed * 7) * 2.2;
+          windY = Math.cos(adjustedProgress * Math.PI * 1.8 + seed * 5) * 0.9;
+          rotation = adjustedProgress * Math.PI * 3.5 + Math.sin(adjustedProgress * Math.PI * 12) * 0.5;
+        }
+        // Pattern 7: Chaotic gentle fall
+        else {
+          windX = Math.sin(adjustedProgress * Math.PI * 3.2 + seed * 15) * 1.8 + 
+                  Math.cos(adjustedProgress * Math.PI * 1.7 + seed * 11) * 1.2;
+          windY = Math.sin(adjustedProgress * Math.PI * 2.8 + seed * 9) * 0.6;
+          rotation = adjustedProgress * Math.PI * 2.5 + seed * 6;
+        }
         
-        // Fade based on fall progress
-        particle.material.opacity = adjustedProgress > 0 ? Math.sin(progress * Math.PI) * 0.8 : 0;
+        // Apply positions with gentle movements - fall from top to bottom of screen (responsive)
+        const fallDistance = (screenHeight + margin * 2) / 100; // Fall distance based on screen height
+        finalX = startX + windX;
+        finalY = startY - (adjustedProgress * fallDistance); // Responsive fall distance
+        
+        particle.position.x = finalX * direction;
+        particle.position.y = finalY;
+        
+        // Add depth variation for 3D effect
+        particle.position.z = Math.sin(adjustedProgress * Math.PI * 2 + seed * 4) * 1.0;
+        
+        // Continuous gentle rotation
+        particle.rotation.z = rotation;
+        
+        // Add size variations for natural diversity
+        const baseSize = 0.3 + (Math.sin(seed * 8.7) + 1) * 0.35; // Range: 0.3 to 1.0
+        const sizeVariation = Math.sin(adjustedProgress * Math.PI * 3 + seed * 12) * 0.1; // Subtle pulsing
+        const finalSize = baseSize + sizeVariation;
+        particle.scale.set(finalSize, finalSize, 1);
+        
+        // Visible throughout the journey - only hide when off-screen
+        if (adjustedProgress > 0 && finalY > -15) {
+          particle.material.opacity = 0.9; // Strong opacity for visibility
+        } else {
+          particle.material.opacity = 0;
+        }
       });
     }
   },
@@ -410,24 +491,84 @@ const transitionAnimations = {
     animate: (particles, progress, reverse = false) => {
       const direction = reverse ? -1 : 1;
       particles.forEach((particle, i) => {
-        // Leaves fall with complex wind patterns
-        const windCycle1 = Math.sin(progress * Math.PI * 2 + i * 0.4) * 2;
-        const windCycle2 = Math.cos(progress * Math.PI * 1.5 + i * 0.8) * 1.5;
-        const gusty = Math.sin(progress * Math.PI * 6 + i) * 0.8;
+        const seed = i * 0.12345;
+        const timeOffset = (i % 40) * 0.02; // More staggered timing
+        const adjustedProgress = Math.max(0, progress - timeOffset);
         
-        // Start from various positions across top
-        const startX = (i % 15 - 7) * 1.2;
-        const fallProgress = progress + (i % 10) * 0.05;
+        // Responsive starting positions from various positions across top - like falling from tree branches
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
         
-        particle.position.x = startX + windCycle1 + windCycle2 + gusty;
-        particle.position.y = (6 - fallProgress * 10) * direction;
+        // Distribute leaves across the tree canopy (full width)
+        const normalizedX = (i % 30) / 29; // 0 to 1 across width
+        const screenStartX = normalizedX * (screenWidth - margin * 2) + margin;
+        const startX = (screenStartX - screenWidth / 2) / 100; // Convert to Three.js coordinates
+        const startY = (screenHeight * 0.5 + Math.sin(seed * 4.1) * (screenHeight * 0.1)) / 100; // Start above screen with variation
         
-        // Tumbling motion as leaves fall
-        particle.position.z = Math.sin(fallProgress * Math.PI * 3 + i * 0.6) * 0.5;
-        particle.rotation.z = fallProgress * Math.PI * 4 + i;
+        // Determine leaf behavior: 80% gentle fall, 20% caught by wind
+        const isWindCaught = (i % 5 === 0); // Every 5th leaf gets caught by wind
+        const windCatchPoint = 0.3 + (Math.sin(seed * 6.2) * 0.2); // Wind catches them 30-50% through fall
         
-        // Natural fade
-        particle.material.opacity = Math.sin(progress * Math.PI) * 0.85;
+        let finalX, finalY;
+        
+        if (isWindCaught && adjustedProgress > windCatchPoint) {
+          // Wind-caught behavior - starts after falling partway down
+          const windStartProgress = (adjustedProgress - windCatchPoint) / (1 - windCatchPoint);
+          const gentleFallProgress = windCatchPoint;
+          
+          // Initial gentle fall to wind catch point (responsive)
+          const initialFallDistance = (screenHeight * 0.35) / 100; // 35% of screen height for initial fall
+          const gentleFallY = startY - (gentleFallProgress * initialFallDistance);
+          const gentleSwayX = Math.sin(gentleFallProgress * Math.PI * 1.5 + seed * 4) * 1.0;
+          
+          // Wind sweeps leaf to the right off screen
+          const windSpeed = 12 + (Math.sin(seed * 5.2) * 6); // Strong rightward wind speed
+          const windAcceleration = windStartProgress * windStartProgress; // Accelerating wind effect
+          const minorBobbing = Math.sin(windStartProgress * Math.PI * 4 + seed * 8) * 0.4; // Minimal bobbing
+          
+          // Responsive continued fall distance
+          const continuedFallDistance = (screenHeight * 0.4) / 100; // 40% of screen height for continued fall
+          finalX = startX + gentleSwayX + (windStartProgress * windSpeed * windAcceleration);
+          finalY = gentleFallY - (windStartProgress * continuedFallDistance) + minorBobbing;
+        } else {
+          // Gentle natural fall (80% of leaves) - responsive distance
+          const gentleSway = Math.sin(adjustedProgress * Math.PI * 1.8 + seed * 6) * 1.2;
+          const naturalDrift = Math.cos(adjustedProgress * Math.PI * 1.2 + seed * 8) * 0.8;
+          const leafWobble = Math.sin(adjustedProgress * Math.PI * 4 + seed * 12) * 0.3;
+          
+          // Responsive natural fall distance based on screen height
+          const naturalFallDistance = (screenHeight * 0.8) / 100; // 80% of screen height
+          finalX = startX + gentleSway + naturalDrift + leafWobble;
+          finalY = startY - (adjustedProgress * naturalFallDistance);
+        }
+        
+        particle.position.x = finalX * direction;
+        particle.position.y = finalY;
+        
+        // Realistic tumbling - faster for wind-caught leaves
+        const tumbleSpeed = isWindCaught ? 4 + (Math.sin(seed * 7) * 2) : 2 + (Math.sin(seed * 9) * 1);
+        particle.rotation.z = adjustedProgress * Math.PI * tumbleSpeed + seed * 8;
+        
+        // Enhanced 3D movement
+        particle.position.z = Math.sin(adjustedProgress * Math.PI * 2.5 + seed * 6) * 0.6;
+        
+        // Smaller leaves with size variations
+        const leafSize = 0.3 + (Math.sin(seed * 11.3) + 1) * 0.25; // Range: 0.3 to 0.8 (smaller)
+        const sizeFlutter = Math.sin(adjustedProgress * Math.PI * 8 + seed * 14) * 0.05; // Slight size flutter
+        particle.scale.set(leafSize + sizeFlutter, leafSize + sizeFlutter, 1);
+        
+        // Natural opacity with wind flicker for caught leaves
+        if (adjustedProgress > 0) {
+          let baseOpacity = Math.sin(progress * Math.PI) * 0.85;
+          if (isWindCaught && adjustedProgress > windCatchPoint) {
+            const windFlicker = Math.sin(adjustedProgress * Math.PI * 12 + seed * 16) * 0.15;
+            baseOpacity += windFlicker;
+          }
+          particle.material.opacity = Math.max(0, Math.min(1, baseOpacity));
+        } else {
+          particle.material.opacity = 0;
+        }
       });
     }
   },
@@ -469,34 +610,105 @@ const transitionAnimations = {
     name: 'Shooting Stars',
     animate: (particles, progress, reverse = false) => {
       const direction = reverse ? -1 : 1;
+      
+      // Responsive screen dimensions
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
+      
       particles.forEach((particle, i) => {
-        // Stars streak diagonally from top-right to bottom-left
-        const streakAngle = -0.3; // Slight tilt
-        const speed = 12;
-        const delay = (i % 15) * 0.04; // Stagger the streaks
+        const seed = i * 0.31415; // Unique seed for each star
         
-        const adjustedProgress = Math.max(0, progress - delay);
+        // More spaced out timing - stars spawn throughout the full animation
+        const spawnTime = (i / particles.length) * 0.7; // Spread stars across 70% of animation
+        const starDuration = 0.4; // Much faster - each star takes 400ms to cross screen
+        const trailDuration = 0.6; // Longer trail duration for visibility
         
-        if (adjustedProgress > 0) {
-          // Starting position (top-right area)
-          const startX = 6 + (i % 8) * 0.5;
-          const startY = 5 + (i % 5) * 0.8;
-          
-          // Calculate streak path
-          const distance = adjustedProgress * speed;
-          particle.position.x = (startX - distance * Math.cos(streakAngle)) * direction;
-          particle.position.y = (startY - distance * Math.sin(streakAngle)) * direction;
-          particle.position.z = (i % 7 - 3) * 0.3;
-          
-          // Shooting star rotation
-          particle.rotation.z = streakAngle + Math.sin(adjustedProgress * Math.PI * 10) * 0.1;
-          
-          // Quick fade in, then fade out as it streaks
-          const fadeIn = Math.min(adjustedProgress * 10, 1);
-          const fadeOut = Math.max(0, 1 - (adjustedProgress - 0.7) * 3);
-          particle.material.opacity = fadeIn * fadeOut * 0.9;
-        } else {
+        // Calculate if this star should be active
+        const starStartTime = spawnTime;
+        const starEndTime = Math.min(1.0, starStartTime + starDuration + trailDuration);
+        
+        if (progress < starStartTime || progress > starEndTime) {
+          // Star not active yet or already finished
           particle.material.opacity = 0;
+          return;
+        }
+        
+        // Calculate phase within star's lifecycle
+        const starProgress = (progress - starStartTime) / (starEndTime - starStartTime);
+        
+        // Better spacing - distribute stars across wider areas
+        const starsPerRow = Math.ceil(Math.sqrt(particles.length) * 0.7); // Fewer per row for more spacing
+        const row = Math.floor(i / starsPerRow);
+        const col = i % starsPerRow;
+        
+        // Starting positions spread across top-right area with better spacing
+        const baseStartX = 0.6 + (col / Math.max(1, starsPerRow - 1)) * 0.35 + (Math.sin(seed * 5.2) * 0.05); // Wider right side
+        const baseStartY = 0.05 + (row / Math.max(1, Math.ceil(particles.length / starsPerRow) - 1)) * 0.4 + (Math.cos(seed * 3.8) * 0.03); // Taller top area
+        
+        // Convert to screen coordinates
+        const startScreenX = baseStartX * (screenWidth - margin * 2) + margin;
+        const startScreenY = baseStartY * (screenHeight - margin * 2) + margin;
+        const startX = (startScreenX - screenWidth / 2) / 100;
+        const startY = (startScreenY - screenHeight / 2) / 100;
+        
+        // Diagonal path to bottom-left with wider spread
+        const endScreenX = (0.02 + Math.sin(seed * 6.1) * 0.15) * (screenWidth - margin * 2) + margin; // Wider bottom-left area
+        const endScreenY = (0.75 + Math.cos(seed * 4.3) * 0.15) * (screenHeight - margin * 2) + margin; // Taller bottom area
+        const endX = (endScreenX - screenWidth / 2) / 100;
+        const endY = (endScreenY - screenHeight / 2) / 100;
+        
+        if (starProgress < starDuration / (starEndTime - starStartTime)) {
+          // Active shooting phase - star is moving
+          const shootProgress = starProgress / (starDuration / (starEndTime - starStartTime));
+          
+          // Much faster acceleration curve
+          const accelerationCurve = shootProgress * shootProgress * shootProgress; // Cubic acceleration for more speed
+          
+          // Calculate current position along path
+          const currentX = startX + (endX - startX) * accelerationCurve;
+          const currentY = startY + (endY - startY) * accelerationCurve;
+          
+          particle.position.x = currentX * direction;
+          particle.position.y = currentY;
+          particle.position.z = (Math.sin(seed * 7.2) * 0.3); // Slight depth variation
+          
+          // Rotate star to align with movement direction
+          const movementAngle = Math.atan2(endY - startY, endX - startX);
+          particle.rotation.z = movementAngle + Math.sin(shootProgress * Math.PI * 12) * 0.05; // Slight wobble
+          
+          // Larger size as star accelerates (more dramatic effect)
+          const baseSize = 0.5 + (Math.sin(seed * 9.1) * 0.3);
+          const speedSize = 1 + (accelerationCurve * 1.0); // Gets much bigger as it speeds up
+          particle.scale.setScalar(baseSize * speedSize);
+          
+          // Very bright during shooting phase
+          const flicker = Math.sin(shootProgress * Math.PI * 25 + seed * 12) * 0.15 + 0.85;
+          particle.material.opacity = flicker;
+          
+        } else {
+          // Trail fade phase - create visible stardust trail
+          const trailProgress = (starProgress - starDuration / (starEndTime - starStartTime)) / (trailDuration / (starEndTime - starStartTime));
+          
+          // Position trail particles along the path
+          const trailPosition = 1 - (trailProgress * 0.7); // Trail follows 70% of the path backwards
+          const trailX = startX + (endX - startX) * trailPosition;
+          const trailY = startY + (endY - startY) * trailPosition;
+          
+          particle.position.x = trailX * direction;
+          particle.position.y = trailY;
+          particle.position.z = (Math.sin(seed * 7.2) * 0.2); // Slight depth variation
+          
+          // Trail particles get smaller and fade
+          const trailOpacity = (1 - trailProgress) * 0.6; // More visible trail
+          particle.material.opacity = Math.max(0, trailOpacity);
+          
+          // Smaller, sparkling trail particles
+          const trailSize = 0.2 + (1 - trailProgress) * 0.3;
+          particle.scale.setScalar(trailSize);
+          
+          // Gentle rotation for sparkle effect
+          particle.rotation.z = (progress * Math.PI * 3 + seed * 8) * (1 - trailProgress);
         }
       });
     }
@@ -531,6 +743,118 @@ const transitionAnimations = {
         particle.material.opacity = Math.sin(progress * Math.PI) * 0.8;
       });
     }
+  },
+
+  'what-i-love': {
+    emoji: '💖',
+    name: 'Heartbeat',
+    animate: (particles, progress, reverse = false) => {
+      particles.forEach((particle, i) => {
+        const seed = i * 0.27183; // Unique seed for each heart
+        
+        // Different heart types for variety
+        const heartTypes = ['💖', '💕', '💗', '💝', '💞', '💓', '❤️', '🧡', '💛', '💚', '💙', '💜'];
+        const heartType = heartTypes[i % heartTypes.length];
+        
+        // Update the particle material with the heart type
+        if (particle.material && particle.material.map && particle.material.map.image) {
+          const canvas = particle.material.map.image;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.font = `${canvas.width * 0.8}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(heartType, canvas.width / 2, canvas.height / 2);
+          particle.material.map.needsUpdate = true;
+        }
+        
+        // Grid-based distribution with randomization for better coverage
+        const heartsPerRow = Math.ceil(Math.sqrt(particles.length));
+        const row = Math.floor(i / heartsPerRow);
+        const col = i % heartsPerRow;
+        
+        // Base grid position with randomization
+        const baseX = (col / (heartsPerRow - 1)) + (Math.sin(seed * 7.2) * 0.15 - 0.075); // Add some randomness
+        const baseY = (row / (heartsPerRow - 1)) + (Math.cos(seed * 5.8) * 0.15 - 0.075); // Add some randomness
+        
+        // Clamp to ensure hearts stay within bounds
+        const normalizedX = Math.max(0.05, Math.min(0.95, baseX));
+        const normalizedY = Math.max(0.05, Math.min(0.95, baseY));
+        
+        // Convert to screen coordinates with proper margins
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
+        
+        const screenX = (normalizedX * (screenWidth - margin * 2) + margin - screenWidth / 2) / 100; // Convert to Three.js coordinates
+        const screenY = ((1 - normalizedY) * (screenHeight - margin * 2) + margin - screenHeight / 2) / 100; // Convert to Three.js coordinates, flip Y
+        
+        // Hearts appear at different times throughout the 8-second animation
+        const appearTime = (Math.sin(seed * 4.1) + 1) * 0.5; // 0 to 1, when heart appears
+        const fadeInDuration = 0.15; // 150ms fade in
+        const pumpDuration = 0.8; // 800ms of pumping
+        const fadeOutDuration = 0.2; // 200ms fade out
+        
+        // Calculate if this heart should be visible
+        const heartStartTime = appearTime;
+        const heartEndTime = Math.min(1.0, heartStartTime + fadeInDuration + pumpDuration + fadeOutDuration);
+        
+        if (progress < heartStartTime || progress > heartEndTime) {
+          // Heart not active yet or already finished
+          particle.scale.setScalar(0);
+          particle.material.opacity = 0;
+          return;
+        }
+        
+        // Calculate phase within heart's lifecycle
+        const heartProgress = (progress - heartStartTime) / (heartEndTime - heartStartTime);
+        
+        let scale = 1.0;
+        let opacity = 0;
+        
+        if (heartProgress < fadeInDuration / (heartEndTime - heartStartTime)) {
+          // Fade in phase - heart pops in
+          const fadeInProgress = heartProgress / (fadeInDuration / (heartEndTime - heartStartTime));
+          scale = 0.3 + (fadeInProgress * 0.7); // Pop from 30% to 100%
+          opacity = fadeInProgress * 0.9;
+        } else if (heartProgress < (fadeInDuration + pumpDuration) / (heartEndTime - heartStartTime)) {
+          // Pumping phase - heartbeat animation
+          const pumpProgress = (heartProgress - fadeInDuration / (heartEndTime - heartStartTime)) / (pumpDuration / (heartEndTime - heartStartTime));
+          
+          // Heartbeat pattern: larger beat, smaller beat, pause
+          const beatCycle = (pumpProgress * 6) % 3; // 3 phases per cycle, 2 cycles over pump duration
+          
+          if (beatCycle < 0.4) {
+            // First beat (larger)
+            const beatPhase = beatCycle / 0.4;
+            scale = 1.0 + Math.sin(beatPhase * Math.PI) * 0.4; // Pump to 140%
+          } else if (beatCycle < 0.7) {
+            // Second beat (smaller)
+            const beatPhase = (beatCycle - 0.4) / 0.3;
+            scale = 1.0 + Math.sin(beatPhase * Math.PI) * 0.2; // Pump to 120%
+          } else {
+            // Rest phase
+            scale = 1.0;
+          }
+          
+          opacity = 0.9;
+        } else {
+          // Fade out phase
+          const fadeOutProgress = (heartProgress - (fadeInDuration + pumpDuration) / (heartEndTime - heartStartTime)) / (fadeOutDuration / (heartEndTime - heartStartTime));
+          scale = 1.0 - (fadeOutProgress * 0.3); // Shrink slightly while fading
+          opacity = 0.9 * (1 - fadeOutProgress);
+        }
+        
+        // Apply transforms
+        particle.position.x = screenX;
+        particle.position.y = screenY;
+        particle.scale.setScalar(scale * (0.8 + Math.sin(seed * 3.7) * 0.4)); // Size variation
+        particle.material.opacity = opacity;
+        
+        // Gentle rotation
+        particle.rotation.z = Math.sin(progress * Math.PI * 2 + seed * 8) * 0.1;
+      });
+    }
   }
 };
 
@@ -549,7 +873,7 @@ function playTransition(sectionId, reverse = false, onComplete = null) {
   
   // Create particles for this transition
   const particles = [];
-  const particleCount = sectionId === 'journey' ? 1200 : 60; // Maximum bird density for ultra dense flock
+  const particleCount = sectionId === 'journey' ? 600 : (sectionId === 'first-moments' ? 500 : (sectionId === 'growing-together' ? 150 : (sectionId === 'what-i-love' ? 120 : 60))); // Reduced birds to 600 for better performance
   
   for (let i = 0; i < particleCount; i++) {
     let texture;
@@ -585,7 +909,7 @@ function playTransition(sectionId, reverse = false, onComplete = null) {
   }
   
   // Animate transition
-  const duration = 5.5; // Even slower for very peaceful bird flight
+  const duration = sectionId === 'first-moments' ? 9.0 : (sectionId === 'growing-together' ? 12.0 : (sectionId === 'what-i-love' ? 8.0 : 5.5)); // 8 seconds for heartbeat animation
   let startTime = Date.now();
   
   const animate = () => {
