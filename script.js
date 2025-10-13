@@ -203,7 +203,7 @@ function getOrCreateBirdTexture() {
     
     // Create canvas to process the video and remove background
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     canvas.width = 64;
     canvas.height = 64;
     
@@ -314,7 +314,7 @@ const transitionAnimations = {
         const individualDelay = (Math.sin(seed * 6.7) + 1) * 0.25; // Tighter timing range for more cohesion
         
         // Add individual speed variations - some birds fly slower for natural effect
-        const flightSpeed = 0.5 + (Math.cos(seed * 4.8) + 1) * 0.25; // Range: 0.5 to 1.0 (no faster than current)
+        const flightSpeed = 1.0 + (Math.cos(seed * 4.8) + 1) * 0.5; // Range: 1.0 to 2.0 (faster flight)
         
         // Diagonal flight from top-left to bottom-right, covering entire screen
         const spacingX = 0.5; // Reduced spacing for much denser coverage
@@ -329,34 +329,37 @@ const transitionAnimations = {
         const gridX = (birdCol / (birdsPerRow - 1)) + (Math.sin(seed * 4.2) * 0.2 - 0.1); // Normalized 0-1 with variation
         const gridY = (birdRow / (birdsPerRow - 1)) + (Math.cos(seed * 3.8) * 0.15 - 0.075); // Normalized 0-1 with variation
         
-        // Convert to Three.js coordinates starting from top-left area
-        const startScreenX = gridX * (screenWidth - margin * 2) + margin - screenWidth * 0.3; // Start left of screen
-        const startScreenY = (1 - gridY) * (screenHeight - margin * 2) + margin + screenHeight * 0.2; // Start above screen
-        const startX = (startScreenX - screenWidth / 2) / 100; // Convert to Three.js coordinates
-        const startY = (startScreenY - screenHeight / 2) / 100;
-        
-        // Ending positions: Diagonal movement to bottom-right
-        const endScreenX = startScreenX + screenWidth * 0.8; // Move across and off screen
-        const endScreenY = startScreenY - screenHeight * 0.8; // Move down and off screen
-        const endX = (endScreenX - screenWidth / 2) / 100;
-        const endY = (endScreenY - screenHeight / 2) / 100;
-        
-        // Individual timing for natural effect with speed variations
+            // Starting positions: BOTTOM-LEFT area of screen, more spread out
+            const startScreenX = margin + (gridX * screenWidth * 0.5); // Start from left 0-50% of screen
+            const startScreenY = (screenHeight * 0.5) + (gridY * screenHeight * 0.5); // Start from bottom 50-100% of screen
+            const startX = (startScreenX - screenWidth / 2) / 100; // Convert to Three.js coordinates
+            const startY = (screenHeight / 2 - startScreenY) / 100; // Flip Y coordinate
+
+            // Ending positions: TOP-RIGHT area - clear diagonal path, more spread out
+            const endScreenX = (screenWidth * 0.5) + (gridX * screenWidth * 0.5); // End at right 50-100% of screen
+            const endScreenY = margin + (gridY * screenHeight * 0.5); // End at top 0-50% of screen
+            const endX = (endScreenX - screenWidth / 2) / 100;
+            const endY = (screenHeight / 2 - endScreenY) / 100; // Flip Y coordinate        // Individual timing for natural effect with speed variations
         const flightProgress = reverse ? (1 - progress) : progress;
         const adjustedProgress = Math.max(0, (flightProgress - individualDelay) * flightSpeed);
         
-        particle.position.x = (startX + (endX - startX) * adjustedProgress) * direction;
-        particle.position.y = startY + (endY - startY) * adjustedProgress;
+        // Clear diagonal path from top-right to bottom-left with slight curvature
+        const baseX = startX + (endX - startX) * adjustedProgress;
+        const baseY = startY + (endY - startY) * adjustedProgress;
         
-        // More varied wing beats for individual behavior
-        const wingBeatFreq = 5 + (Math.sin(seed * 8.4) * 2); // Reduced wing beat variation
-        const wingBeat = Math.sin(adjustedProgress * Math.PI * wingBeatFreq + seed * 10) * 0.2;
+        // Add gentle curvature to the flight path (not random drift)
+        const pathProgress = adjustedProgress;
+        const curvature = Math.sin(pathProgress * Math.PI) * 0.8; // Gentle arc in the middle of flight
+        const curveX = Math.sin(seed * 3.7) * curvature; // Individual curve direction
+        const curveY = Math.cos(seed * 2.1) * curvature * 0.3; // Subtle vertical curve
+        
+        particle.position.x = (baseX + curveX) * direction;
+        particle.position.y = baseY + curveY;
+        
+        // Gentle wing beats for natural movement (not affecting direction)
+        const wingBeatFreq = 4 + (Math.sin(seed * 8.4) * 1);
+        const wingBeat = Math.sin(adjustedProgress * Math.PI * wingBeatFreq + seed * 10) * 0.15;
         particle.position.y += wingBeat;
-        
-        // Reduced drift for more cohesive directional movement
-        const primaryDrift = Math.sin(adjustedProgress * Math.PI * 2 + seed * 5) * 0.5; // Reduced drift
-        const secondaryDrift = Math.cos(adjustedProgress * Math.PI * 1.5 + seed * 3) * 0.2; // Reduced drift
-        particle.position.x += primaryDrift + secondaryDrift;
         
         // Individual depth for 3D effect
         particle.position.z = Math.sin(seed * 4 + adjustedProgress * Math.PI) * 1.2;
@@ -386,18 +389,30 @@ const transitionAnimations = {
         const patternType = i % 8;
         const seed = i * 0.12345;
         
-        // Much slower, gentle falling for longer visibility
-        const baseFallSpeed = 2.5 + (Math.sin(seed * 5.2) * 1.5); // Adjusted: 1-4 fall speed
-        const timeOffset = (i % 50) * 0.008; // Reduced stagger: max 0.4 seconds delay
-        const adjustedProgress = Math.max(0, progress - timeOffset);
+        // Shower effect with guaranteed completion: bound start by duration so each finishes before 1
+        const randDur = (Math.cos(seed * 2.7) + 1) * 0.5; // 0..1
+        const fallDuration = 0.6 + randDur * 0.3; // 0.6..0.9
+        const maxAppear = Math.max(0, 1 - fallDuration); // ensure end <= 1
+        const appearNoise = (Math.sin(seed * 4.1) + 1) * 0.5; // 0..1
+        const appearTime = appearNoise * maxAppear; // 0..maxAppear
+        if (progress < appearTime) {
+          particle.material.opacity = 0;
+          return;
+        }
+        const endTime = appearTime + fallDuration;
+        if (progress > endTime) {
+          particle.material.opacity = 0; // fully gone once fall completes
+          return;
+        }
+        const adjustedProgress = Math.max(0, Math.min(1, (progress - appearTime) / fallDuration));
         
         // Responsive starting positions spread across entire screen width
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
         
-        // Distribute flowers across the full width of the screen
-        const normalizedX = (i % 40) / 39; // 0 to 1 across width
+  // Distribute flowers across the full width of the screen with extra randomness
+  const normalizedX = ((i % 40) + (Math.sin(seed * 6.3) + 1) * 0.5) / 40; // 0..1 with jitter
         const screenStartX = normalizedX * (screenWidth - margin * 2) + margin;
         const startX = (screenStartX - screenWidth / 2) / 100; // Convert to Three.js coordinates
         const startY = (screenHeight * 0.6) / 100; // Start above screen, responsive to height
@@ -469,15 +484,19 @@ const transitionAnimations = {
         // Continuous gentle rotation
         particle.rotation.z = rotation;
         
-        // Add size variations for natural diversity
-        const baseSize = 0.3 + (Math.sin(seed * 8.7) + 1) * 0.35; // Range: 0.3 to 1.0
-        const sizeVariation = Math.sin(adjustedProgress * Math.PI * 3 + seed * 12) * 0.1; // Subtle pulsing
+        // Add size variations for natural diversity (reduced max size)
+        const baseSize = 0.18 + (Math.sin(seed * 8.7) + 1) * 0.18; // Range: ~0.18 to ~0.36 (smaller)
+        const sizeVariation = Math.sin(adjustedProgress * Math.PI * 3 + seed * 12) * 0.07; // Subtle pulsing
         const finalSize = baseSize + sizeVariation;
         particle.scale.set(finalSize, finalSize, 1);
         
-        // Visible throughout the journey - only hide when off-screen
+        // Visibility with smooth fade-out near the end of fall
         if (adjustedProgress > 0 && finalY > -15) {
-          particle.material.opacity = 0.9; // Strong opacity for visibility
+          const fadeOutStart = 0.8; // start fading at last 20% of flower's life
+          const opacity = adjustedProgress < fadeOutStart
+            ? 0.9
+            : 0.9 * Math.max(0, 1 - (adjustedProgress - fadeOutStart) / (1 - fadeOutStart));
+          particle.material.opacity = opacity;
         } else {
           particle.material.opacity = 0;
         }
@@ -495,7 +514,7 @@ const transitionAnimations = {
         const timeOffset = (i % 40) * 0.02; // More staggered timing
         const adjustedProgress = Math.max(0, progress - timeOffset);
         
-        // Responsive starting positions from various positions across top - like falling from tree branches
+  // Responsive starting positions from various positions across top - like falling from tree branches
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         const margin = Math.min(screenWidth, screenHeight) * 0.08; // 8% margin for safety
@@ -510,37 +529,33 @@ const transitionAnimations = {
         const isWindCaught = (i % 5 === 0); // Every 5th leaf gets caught by wind
         const windCatchPoint = 0.3 + (Math.sin(seed * 6.2) * 0.2); // Wind catches them 30-50% through fall
         
-        let finalX, finalY;
+  let finalX, finalY;
+  // Compute a base fall distance that ensures leaf goes off-screen before the end
+  const baseFallDistance = (screenHeight + margin * 2) / 100; // base distance
+  const offscreenTargetY = -16; // go well below visible threshold (-15)
+  const requiredDistance = startY - offscreenTargetY;
+  const fallDistance = Math.max(baseFallDistance, requiredDistance);
+  const baseY = startY - (adjustedProgress * fallDistance);
         
         if (isWindCaught && adjustedProgress > windCatchPoint) {
           // Wind-caught behavior - starts after falling partway down
           const windStartProgress = (adjustedProgress - windCatchPoint) / (1 - windCatchPoint);
           const gentleFallProgress = windCatchPoint;
           
-          // Initial gentle fall to wind catch point (responsive)
-          const initialFallDistance = (screenHeight * 0.35) / 100; // 35% of screen height for initial fall
-          const gentleFallY = startY - (gentleFallProgress * initialFallDistance);
+          // Initial gentle sway before wind, then wind sweeps leaf to the right off screen
           const gentleSwayX = Math.sin(gentleFallProgress * Math.PI * 1.5 + seed * 4) * 1.0;
-          
-          // Wind sweeps leaf to the right off screen
-          const windSpeed = 12 + (Math.sin(seed * 5.2) * 6); // Strong rightward wind speed
-          const windAcceleration = windStartProgress * windStartProgress; // Accelerating wind effect
-          const minorBobbing = Math.sin(windStartProgress * Math.PI * 4 + seed * 8) * 0.4; // Minimal bobbing
-          
-          // Responsive continued fall distance
-          const continuedFallDistance = (screenHeight * 0.4) / 100; // 40% of screen height for continued fall
+          const windSpeed = 14 + (Math.sin(seed * 5.2) * 7); // slightly stronger rightward wind
+          const windAcceleration = windStartProgress * windStartProgress; // accelerating wind effect
+          const minorBobbing = Math.sin(windStartProgress * Math.PI * 4 + seed * 8) * 0.4; // minimal bobbing
           finalX = startX + gentleSwayX + (windStartProgress * windSpeed * windAcceleration);
-          finalY = gentleFallY - (windStartProgress * continuedFallDistance) + minorBobbing;
+          finalY = baseY + minorBobbing; // vertical motion guaranteed by base fall
         } else {
-          // Gentle natural fall (80% of leaves) - responsive distance
+          // Gentle natural fall (80% of leaves) - with guaranteed distance to off-screen
           const gentleSway = Math.sin(adjustedProgress * Math.PI * 1.8 + seed * 6) * 1.2;
           const naturalDrift = Math.cos(adjustedProgress * Math.PI * 1.2 + seed * 8) * 0.8;
           const leafWobble = Math.sin(adjustedProgress * Math.PI * 4 + seed * 12) * 0.3;
-          
-          // Responsive natural fall distance based on screen height
-          const naturalFallDistance = (screenHeight * 0.8) / 100; // 80% of screen height
           finalX = startX + gentleSway + naturalDrift + leafWobble;
-          finalY = startY - (adjustedProgress * naturalFallDistance);
+          finalY = baseY; // vertical motion guaranteed by base fall
         }
         
         particle.position.x = finalX * direction;
@@ -553,8 +568,8 @@ const transitionAnimations = {
         // Enhanced 3D movement
         particle.position.z = Math.sin(adjustedProgress * Math.PI * 2.5 + seed * 6) * 0.6;
         
-        // Smaller leaves with size variations
-        const leafSize = 0.3 + (Math.sin(seed * 11.3) + 1) * 0.25; // Range: 0.3 to 0.8 (smaller)
+  // Smaller leaves with size variations (reduce max size a bit)
+  const leafSize = 0.25 + (Math.sin(seed * 11.3) + 1) * 0.2; // Range: ~0.25 to ~0.65
         const sizeFlutter = Math.sin(adjustedProgress * Math.PI * 8 + seed * 14) * 0.05; // Slight size flutter
         particle.scale.set(leafSize + sizeFlutter, leafSize + sizeFlutter, 1);
         
@@ -873,7 +888,10 @@ function playTransition(sectionId, reverse = false, onComplete = null) {
   
   // Create particles for this transition
   const particles = [];
-  const particleCount = sectionId === 'journey' ? 600 : (sectionId === 'first-moments' ? 500 : (sectionId === 'growing-together' ? 150 : (sectionId === 'what-i-love' ? 120 : 60))); // Reduced birds to 600 for better performance
+  // Responsive particle count - fewer on mobile for better performance and visibility
+  const isMobile = window.innerWidth <= 768;
+  const birdCount = isMobile ? 100 : 150; // Further reduced for desktop
+  const particleCount = sectionId === 'journey' ? birdCount : (sectionId === 'first-moments' ? 500 : (sectionId === 'growing-together' ? 150 : (sectionId === 'what-i-love' ? 120 : 60)));
   
   for (let i = 0; i < particleCount; i++) {
     let texture;
@@ -894,11 +912,13 @@ function playTransition(sectionId, reverse = false, onComplete = null) {
     
     const sprite = new THREE.Sprite(material);
     
-    // Make birds slightly larger since they're more detailed with size variations
+    // Make birds smaller on mobile for better visibility
     if (sectionId === 'journey') {
       // Add size variation for more natural flock appearance
       const sizeSeed = i * 0.12345; // Same seed used in animation for consistency
-      const sizeVariation = 0.4 + (Math.sin(sizeSeed * 7.8) + 1) * 0.3; // Range: 0.4 to 1.0
+      const isMobile = window.innerWidth <= 768;
+      const baseSizeMultiplier = isMobile ? 0.6 : 1.0; // Smaller birds on mobile
+      const sizeVariation = (0.4 + (Math.sin(sizeSeed * 7.8) + 1) * 0.3) * baseSizeMultiplier; // Range: 0.24 to 0.6 on mobile
       sprite.scale.set(sizeVariation, sizeVariation, 1);
     } else {
       sprite.scale.set(0.4, 0.4, 1);
