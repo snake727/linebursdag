@@ -1,6 +1,4 @@
-﻿/* === SCRIPT.JS - Clean version without animations === */
-
-// ====== PASSWORD SYSTEM ======
+﻿// ====== PASSWORD SYSTEM ======
 const PASSWORD_HASH = "38c69d88e8c0798840b4c4e3a69bec0e03b37329c97fdb9cf190bcffed22d4bf"; 
 document.getElementById("enterBtn").addEventListener("click", checkPassword);
 document.getElementById("password").addEventListener("keypress", (e) => {
@@ -59,6 +57,139 @@ function toggleAudio() {
   }
 }
 
+// ====== VIDEO ANIMATION SYSTEM ======
+let videoOverlay = null;
+let currentVideo = null;
+
+// Map sections to their video files
+const sectionVideos = {
+  "journey": "./stars2.webm",
+  "first-moments": "./leafblow.webm",
+  "growing-together": "./leafblow.webm",
+  "what-i-love": "./leafblow.webm",
+  "our-future": "./stars2.webm",
+  "birthday-message": null
+};
+
+function initVideoOverlay() {
+  if (!videoOverlay) {
+    videoOverlay = document.createElement('div');
+    videoOverlay.id = 'videoOverlay';
+    videoOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    `;
+    document.body.appendChild(videoOverlay);
+  }
+  return videoOverlay;
+}
+
+function stopCurrentVideo(options = {}) {
+  const { immediate = false } = options;
+  if (currentVideo) {
+    currentVideo.pause();
+    // Release the decoder resources from the previous source
+    currentVideo.removeAttribute("src");
+    currentVideo.load();
+    currentVideo.remove();
+    currentVideo = null;
+  }
+
+  if (videoOverlay) {
+    gsap.killTweensOf(videoOverlay);
+    if (immediate) {
+      videoOverlay.style.opacity = 0;
+      videoOverlay.innerHTML = "";
+    } else {
+      gsap.to(videoOverlay, {
+        opacity: 0,
+        duration: 0.3,
+        onComplete: () => {
+          videoOverlay.innerHTML = "";
+        }
+      });
+    }
+  }
+}
+
+function playVideoForSection(sectionId) {
+  // Stop any currently playing video
+  stopCurrentVideo({ immediate: true });
+  
+  const videoPath = sectionVideos[sectionId];
+  if (!videoPath) {
+    console.log(`No video configured for section: ${sectionId}`);
+    return;
+  }
+  
+  console.log(`Starting video for section: ${sectionId}`);
+  const overlay = initVideoOverlay();
+  
+  // Create video element that sits directly in the overlay
+  const video = document.createElement('video');
+  video.src = videoPath;
+  video.preload = 'auto';
+  video.loop = false; // Play once to give the feeling of a transition
+  video.muted = true; // Ensure autoplay works everywhere
+  video.autoplay = true;
+  video.playsInline = true;
+  video.style.cssText = `
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  `;
+
+  // Replace any existing overlay content with the new video
+  overlay.innerHTML = '';
+  overlay.appendChild(video);
+
+  currentVideo = video;
+
+  const fadeInVideo = () => {
+    // Start fully transparent to avoid flashes when switching sections
+    gsap.to(overlay, {
+      opacity: 1,
+      duration: 0.6,
+      ease: "power2.out"
+    });
+  };
+
+  // Fade-in once the browser has a frame ready to display
+  video.addEventListener('loadeddata', fadeInVideo, { once: true });
+
+  if (video.readyState >= video.HAVE_CURRENT_DATA) {
+    fadeInVideo();
+  }
+
+  video.addEventListener('ended', () => {
+    // Gently hide the overlay as soon as the clip finishes
+    if (videoOverlay) {
+      gsap.to(videoOverlay, {
+        opacity: 0,
+        duration: 0.5,
+        ease: "power2.inOut"
+      });
+    }
+  });
+
+  video.addEventListener('error', (e) => {
+    console.error('Failed to load section video:', e);
+  });
+
+  // Kick off playback and gracefully handle browsers that require gestures
+  video.play().catch(() => {
+    console.warn('Autoplay was blocked. The video will start after user interaction.');
+  });
+}
+
 // ====== SECTION NAVIGATION ======
 let currentSection = "welcome";
 let isTransitioningSection = false;
@@ -70,6 +201,9 @@ function showSection(id) {
   if (!newSection || isTransitioningSection) return;
   
   isTransitioningSection = true;
+
+  // Stop current video when changing sections
+  stopCurrentVideo();
 
   // Fade out current section, then fade in new section
   if (oldSection && oldSection !== newSection) {
@@ -96,6 +230,8 @@ function showSection(id) {
           ease: "power2.inOut",
           onComplete: () => {
             isTransitioningSection = false;
+            // Start video for the new section
+            playVideoForSection(id);
           }
         });
       }
@@ -107,6 +243,8 @@ function showSection(id) {
     currentSection = id;
     updateProgress(id);
     isTransitioningSection = false;
+    // Start video for the section
+    playVideoForSection(id);
     return;
   }
   
