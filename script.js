@@ -80,7 +80,7 @@ function setSafariVideoTextComp(active) {
 // Map sections to their video files
 const sectionVideos = {
   "journey": "./birds.webm",
-  "first-moments": "./leafblow.webm",
+  "first-moments": "./flowers.webm",
   "growing-together": "./leafblow.webm",
   "what-i-love": "./hearts.webm",
   "our-future": "./stars2.webm",
