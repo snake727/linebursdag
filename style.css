@@ -501,25 +501,44 @@ button:hover, button:focus {
 }
 
 .audio-toggle {
-  background: rgba(91, 144, 113, 0.9);
+  position: relative;
+  background: rgba(91, 144, 113, 0.95);
   border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  color: white;
-  font-size: 20px;
+  border-radius: 10px; /* rectangular with rounded corners */
+  color: #fff;
+  font-size: 20px; /* icon size */
+  line-height: 1;
+  padding: 8px 12px; /* slightly larger than icon, but finger friendly */
+  min-height: 44px; /* touch target */
+  min-width: 44px;  /* touch target */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
   backdrop-filter: blur(10px);
 }
 
 .audio-toggle:hover {
   background: rgba(91, 144, 113, 1);
-  transform: scale(1.1);
+  transform: translateY(-1px);
 }
 
-.audio-toggle.muted {
-  background: rgba(128, 128, 128, 0.7);
+/* Keep background the same; indicate mute with a diagonal slash */
+.audio-toggle.muted { background: rgba(91, 144, 113, 0.95); }
+.audio-toggle.muted::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  top: 50%;
+  left: 12%;
+  width: 76%;
+  height: 2px;
+  background: #fff;
+  transform: rotate(-35deg);
+  transform-origin: center;
+  opacity: 0.95;
+  border-radius: 2px;
 }
 
 /* Fade transition for content */

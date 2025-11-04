@@ -25,6 +25,7 @@ async function checkPassword() {
       audio.play();
       gsap.to(audio, { volume: 0.3, duration: 2 });
       toggleBtn.textContent = "🔊";
+      toggleBtn.classList.remove('muted');
       audioPlaying = true;
     }
     
@@ -45,6 +46,7 @@ function toggleAudio() {
     audio.play();
     gsap.to(audio, { volume: 0.3, duration: 2 });
     toggleBtn.textContent = "🔊";
+    toggleBtn.classList.remove('muted');
     audioPlaying = true;
   } else {
     gsap.to(audio, {
@@ -52,7 +54,8 @@ function toggleAudio() {
       duration: 1,
       onComplete: () => audio.pause()
     });
-    toggleBtn.textContent = "🎵";
+    toggleBtn.textContent = "🔊";
+    toggleBtn.classList.add('muted');
     audioPlaying = false;
   }
 }
