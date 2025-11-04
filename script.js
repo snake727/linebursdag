@@ -61,6 +61,19 @@ function toggleAudio() {
 let videoOverlay = null;
 let currentVideo = null;
 
+// Safari detection (desktop & iOS)
+const IS_SAFARI = (() => {
+  const ua = navigator.userAgent;
+  return /safari/i.test(ua) && !/chrome|crios|chromium|android|fxios|edg/i.test(ua);
+})();
+
+function setSafariVideoTextComp(active) {
+  // Toggle class on <html> so CSS can fade text color for readability on black background
+  const root = document.documentElement;
+  if (active) root.classList.add('safari-video-black');
+  else root.classList.remove('safari-video-black');
+}
+
 // Map sections to their video files
 const sectionVideos = {
   "journey": "./birds.webm",
@@ -93,6 +106,8 @@ function initVideoOverlay() {
 
 function stopCurrentVideo(options = {}) {
   const { immediate = false } = options;
+  // If we stop a video, clear Safari compensation
+  if (IS_SAFARI) setSafariVideoTextComp(false);
   if (currentVideo) {
     currentVideo.pause();
     // Release the decoder resources from the previous source
@@ -172,6 +187,7 @@ function playVideoForSection(sectionId) {
   currentVideo = video;
 
   const fadeInVideo = () => {
+    if (IS_SAFARI) setSafariVideoTextComp(true);
     // Start fully transparent to avoid flashes when switching sections
     gsap.to(overlay, {
       opacity: 1,
@@ -196,10 +212,12 @@ function playVideoForSection(sectionId) {
         ease: "power2.inOut"
       });
     }
+    if (IS_SAFARI) setSafariVideoTextComp(false);
   });
 
   video.addEventListener('error', (e) => {
     console.error('Failed to load section video:', e);
+    if (IS_SAFARI) setSafariVideoTextComp(false);
   });
 
   // Kick off playback and gracefully handle browsers that require gestures

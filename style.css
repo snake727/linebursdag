@@ -81,6 +81,7 @@ h1 {
   margin-bottom: 1rem;
   font-weight: 300;
   color: var(--primary);
+  transition: color 0.3s ease;
 }
 
 h2 {
@@ -88,12 +89,14 @@ h2 {
   margin-bottom: 1rem;
   font-weight: 300;
   color: var(--primary);
+  transition: color 0.3s ease;
 }
 
 p {
   font-size: clamp(1rem, 3vw, 1.1rem);
   margin-bottom: 1rem;
   max-width: 100%;
+  transition: color 0.3s ease;
 }
 
 .navigation {
@@ -147,6 +150,7 @@ p {
   margin-top: 1.5rem;
   color: var(--primary);
   font-size: clamp(0.9rem, 2.8vw, 1rem);
+  transition: color 0.3s ease;
 }
 
 input {
@@ -290,6 +294,19 @@ button:hover, button:focus {
   height: 100%;
   background: transparent;       /* ensure no black paint */
   will-change: transform;        /* compositor hint */
+}
+
+/* Safari: make text white while video overlay forces a black backing */
+.safari-video-black h1,
+.safari-video-black h2,
+.safari-video-black p,
+.safari-video-black .signature {
+  color: #fff !important;
+}
+
+.safari-video-black .nav-btn {
+  color: #fff !important;
+  border-color: #fff !important;
 }
 
 .particle-system {
