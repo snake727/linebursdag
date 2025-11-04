@@ -61,15 +61,40 @@ function toggleAudio() {
 let videoOverlay = null;
 let currentVideo = null;
 
-// Map sections to their video files
+// Basic UA helpers to decide preferred format
+function isIOS() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  const iDevice = /iPad|iPhone|iPod/.test(ua);
+  // iPadOS 13+ masquerades as Mac; check touch points
+  const iPadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return iDevice || iPadOs;
+}
+
+function isSafariLike() {
+  const ua = navigator.userAgent;
+  const isSafari = /Safari\//.test(ua) && !/(Chrome|Chromium|Edg|OPR|CriOS|FxiOS)\//.test(ua);
+  return isSafari;
+}
+
+// Map sections to their video files in multiple formats
 const sectionVideos = {
-  "journey": "./stars2.webm",
-  "first-moments": "./leafblow.webm",
-  "growing-together": "./leafblow.webm",
-  "what-i-love": "./leafblow.webm",
-  "our-future": "./stars2.webm",
-  "birthday-message": null
+  "journey": { webm: "./birds.webm", mov: "./stars1.mov" },
+  "first-moments": { webm: "./leafblow.webm", mov: "./leafblow.mov" },
+  "growing-together": { webm: "./leafblow.webm", mov: "./leafblow.mov" },
+  "what-i-love": { webm: "./leafblow.webm", mov: "./leafblow.mov" },
+  "our-future": { webm: "./stars2.webm", mov: "./stars2.mov" },
+  "birthday-message": { webm: null, mov: null }
 };
+
+function getPreferredSourcesFor(sectionId) {
+  const entry = sectionVideos[sectionId];
+  if (!entry) return [];
+  const preferMov = isIOS() || isSafariLike();
+  const sources = preferMov
+    ? [entry.mov, entry.webm]
+    : [entry.webm, entry.mov];
+  return sources.filter(Boolean);
+}
 
 function initVideoOverlay() {
   if (!videoOverlay) {
@@ -122,72 +147,70 @@ function stopCurrentVideo(options = {}) {
 function playVideoForSection(sectionId) {
   // Stop any currently playing video
   stopCurrentVideo({ immediate: true });
-  
-  const videoPath = sectionVideos[sectionId];
-  if (!videoPath) {
+
+  const sources = getPreferredSourcesFor(sectionId);
+  if (!sources.length) {
     console.log(`No video configured for section: ${sectionId}`);
     return;
   }
-  
-  console.log(`Starting video for section: ${sectionId}`);
+
   const overlay = initVideoOverlay();
-  
-  // Create video element that sits directly in the overlay
-  const video = document.createElement('video');
-  video.src = videoPath;
-  video.preload = 'auto';
-  video.loop = false; // Play once to give the feeling of a transition
-  video.muted = true; // Ensure autoplay works everywhere
-  video.autoplay = true;
-  video.playsInline = true;
-  video.style.cssText = `
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
-  `;
 
-  // Replace any existing overlay content with the new video
-  overlay.innerHTML = '';
-  overlay.appendChild(video);
+  const trySourceAt = (idx) => {
+    if (idx >= sources.length) {
+      console.warn(`All sources failed for section: ${sectionId}`);
+      return;
+    }
 
-  currentVideo = video;
+    const src = sources[idx];
+    // Build a fresh <video>
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.loop = false;
+    video.muted = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.style.cssText = `
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    `;
 
-  const fadeInVideo = () => {
-    // Start fully transparent to avoid flashes when switching sections
-    gsap.to(overlay, {
-      opacity: 1,
-      duration: 0.6,
-      ease: "power2.out"
+    // Replace existing overlay content with this attempt
+    overlay.innerHTML = '';
+    overlay.appendChild(video);
+
+    currentVideo = video;
+    video.src = src;
+
+    const fadeInVideo = () => {
+      if (video !== currentVideo) return; // navigated away / replaced
+      gsap.to(overlay, { opacity: 1, duration: 0.6, ease: 'power2.out' });
+    };
+
+    video.addEventListener('loadeddata', fadeInVideo, { once: true });
+
+    // If it errors, try the next source
+    video.addEventListener('error', () => {
+      if (video !== currentVideo) return; // already replaced
+      trySourceAt(idx + 1);
+    }, { once: true });
+
+    video.addEventListener('ended', () => {
+      if (video !== currentVideo) return;
+      if (videoOverlay) {
+        gsap.to(videoOverlay, { opacity: 0, duration: 0.5, ease: 'power2.inOut' });
+      }
+    });
+
+    // Kick off playback and gracefully handle browsers that require gestures
+    video.play().catch(() => {
+      // On autoplay block, we still keep the element; Safari iOS will start on tap
     });
   };
 
-  // Fade-in once the browser has a frame ready to display
-  video.addEventListener('loadeddata', fadeInVideo, { once: true });
-
-  if (video.readyState >= video.HAVE_CURRENT_DATA) {
-    fadeInVideo();
-  }
-
-  video.addEventListener('ended', () => {
-    // Gently hide the overlay as soon as the clip finishes
-    if (videoOverlay) {
-      gsap.to(videoOverlay, {
-        opacity: 0,
-        duration: 0.5,
-        ease: "power2.inOut"
-      });
-    }
-  });
-
-  video.addEventListener('error', (e) => {
-    console.error('Failed to load section video:', e);
-  });
-
-  // Kick off playback and gracefully handle browsers that require gestures
-  video.play().catch(() => {
-    console.warn('Autoplay was blocked. The video will start after user interaction.');
-  });
+  trySourceAt(0);
 }
 
 // ====== SECTION NAVIGATION ======
