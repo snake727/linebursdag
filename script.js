@@ -84,7 +84,7 @@ const sectionVideos = {
   "growing-together": "./leafblow.webm",
   "what-i-love": "./hearts.webm",
   "our-future": "./stars2.webm",
-  "birthday-message": null
+  "birthday-message": "./fireworks.webm"
 };
 
 function initVideoOverlay() {
