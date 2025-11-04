@@ -61,6 +61,9 @@ function toggleAudio() {
 let videoOverlay = null;
 let currentVideo = null;
 
+// Basic Safari detection (desktop & iOS); excludes Chrome/Edge/Firefox variants
+const IS_SAFARI = /safari/i.test(navigator.userAgent) && !/chrome|crios|chromium|android|fxios|edg/i.test(navigator.userAgent);
+
 // Map sections to their video files
 const sectionVideos = {
   "journey": "./birds.webm",
@@ -163,6 +166,11 @@ function playVideoForSection(sectionId) {
     will-change: transform;
     display: block;
   `;
+
+  // Safari fallback: simulate transparency by blending black to screen
+  if (IS_SAFARI) {
+    video.style.mixBlendMode = 'screen';
+  }
 
   // Replace any existing overlay content with the new video
   overlay.innerHTML = '';
