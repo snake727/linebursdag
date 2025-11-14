@@ -551,3 +551,155 @@ button:hover, button:focus {
   50% { opacity: 0; }
   100% { opacity: 1; }
 }
+
+/* Photo hint icons - floating interactive elements */
+.photo-hint {
+  position: absolute;
+  top: clamp(10px, 3vw, 20px);
+  right: clamp(20px, 5vw, 40px);
+  font-size: clamp(2rem, 6vw, 3rem);
+  cursor: pointer;
+  z-index: 150;
+  animation: photoHintPulse 2s ease-in-out infinite;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(91, 144, 113, 0.3));
+}
+
+.photo-hint:hover,
+.photo-hint:active {
+  transform: scale(1.15);
+  filter: drop-shadow(0 4px 12px rgba(91, 144, 113, 0.5));
+}
+
+@keyframes photoHintPulse {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08) translateY(-3px);
+    opacity: 1;
+  }
+}
+
+/* Photo reveal modal */
+.photo-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  animation: modalFadeIn 0.3s ease;
+}
+
+.photo-modal.active {
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.photo-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: photoSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes photoSlideIn {
+  from {
+    transform: scale(0.8) translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.photo-modal-content img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  object-fit: contain;
+  background: #fff;
+  padding: 8px;
+}
+
+.photo-modal-content p {
+  margin-top: 1.5rem;
+  color: #fff;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  text-align: center;
+  max-width: 500px;
+  padding: 0 1rem;
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.photo-close {
+  position: absolute;
+  top: -50px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 3rem;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  line-height: 1;
+  padding: 0;
+  min-width: auto;
+  margin: 0;
+}
+
+.photo-close:hover,
+.photo-close:active {
+  transform: scale(1.2) rotate(90deg);
+  color: var(--accent);
+}
+
+/* Mobile adjustments for photo modal */
+@media (max-width: 768px) {
+  .photo-hint {
+    top: clamp(8px, 2vw, 15px);
+    right: clamp(15px, 4vw, 30px);
+    font-size: clamp(2.5rem, 8vw, 4rem);
+  }
+  
+  .photo-modal-content {
+    max-width: 95%;
+  }
+  
+  .photo-close {
+    top: -45px;
+    font-size: 2.5rem;
+  }
+  
+  .photo-modal-content img {
+    max-height: 60vh;
+  }
+}

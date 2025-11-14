@@ -65,6 +65,7 @@
       noen gang ta ifra dæ. Første gangen vi gikk tur sammen, va noe av det fineste æ har opplevd. De samtalan vi hadde, lattern vi hadde fra vitsan
       og morsomhetan vi prata om, e minna æ kommer til å bær med mæ for alltid.
     </p>
+    <div class="photo-hint" data-photo="Snapchat-1368021606.jpg" data-caption="Et av de første bildan vi tok sammen 💚">💚</div>
     <div class="navigation">
       <button class="nav-btn" onclick="showSection('journey')">Back</button>
       <button class="continue-btn" onclick="showSection('growing-together')">Continue</button>
@@ -77,6 +78,7 @@
       Du får noe som en vanlig tur til å føles meire ut som en reise ut på et eventyr, og æ ser frem til alt vi kommer til å finn på sammen. Æ føla at vi tillata kværandre
       til å jobb for å vær bedre for ikke bare andre, men også oss sjøl. Det e det ikke alle som klar! </p>
     <p>Å se tilbake på alt vi har gjort, e noe æ e veldig takknemlig for.</p>
+    <div class="photo-hint" data-photo="Snapchat-608544302.jpg" data-caption="Gode minna sammen 🌿">🌿</div>
     <div class="navigation">
       <button class="nav-btn" onclick="showSection('first-moments')">Back</button>
       <button class="continue-btn" onclick="showSection('what-i-love')">Continue</button>
@@ -91,6 +93,7 @@
     <p>Kordan du får mæ til å ville bli en bedre person bare ved å vær dæ sjøl.</p>
     <p>Æ ælska alt ved dæ.</p>
     <p>Du e helt fantastisk, Line.</p>
+    <div class="photo-hint" data-photo="Snapchat-977609759.jpg" data-caption="Du gjør mæ så glad ✨">✨</div>
     <div class="navigation">
       <button class="nav-btn" onclick="showSection('growing-together')">Back</button>
       <button class="continue-btn" onclick="showSection('our-future')">Continue</button>
@@ -121,6 +124,16 @@
   <div class="progress-bar">
     <div class="progress-fill" id="progress-fill"></div>
   </div>
+
+  <!-- Photo reveal modal -->
+  <div id="photoModal" class="photo-modal">
+    <div class="photo-modal-content">
+      <button class="photo-close" onclick="closePhotoModal()">&times;</button>
+      <img id="modalPhoto" src="" alt="Memory">
+      <p id="modalCaption"></p>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>

@@ -325,4 +325,52 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     console.error("Welcome section not found!");
   }
+  
+  // Initialize photo hint interactions
+  initPhotoHints();
+});
+
+// ====== PHOTO REVEAL SYSTEM ======
+function initPhotoHints() {
+  const hints = document.querySelectorAll('.photo-hint');
+  hints.forEach(hint => {
+    hint.addEventListener('click', () => {
+      const photo = hint.getAttribute('data-photo');
+      const caption = hint.getAttribute('data-caption');
+      openPhotoModal(photo, caption);
+    });
+  });
+}
+
+function openPhotoModal(photoSrc, caption) {
+  const modal = document.getElementById('photoModal');
+  const modalPhoto = document.getElementById('modalPhoto');
+  const modalCaption = document.getElementById('modalCaption');
+  
+  modalPhoto.src = photoSrc;
+  modalCaption.textContent = caption;
+  modal.classList.add('active');
+  
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+  
+  // Close on background click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closePhotoModal();
+    }
+  });
+}
+
+function closePhotoModal() {
+  const modal = document.getElementById('photoModal');
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closePhotoModal();
+  }
 });
